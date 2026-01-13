@@ -31,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.aitextcleaner.R
+import com.aitextcleaner.viewmodel.TextCleanerUiState
 import com.aitextcleaner.viewmodel.TextCleanerViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,6 +41,7 @@ fun ResultScreen(
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val formState by viewModel.formState.collectAsState()
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
 
@@ -65,8 +67,8 @@ fun ResultScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            when {
-                uiState.isLoading -> {
+            when (uiState) {
+                TextCleanerUiState.Loading -> {
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Column(
                             modifier = Modifier
@@ -82,7 +84,7 @@ fun ResultScreen(
                         }
                     }
                 }
-                uiState.error != null -> {
+                is TextCleanerUiState.Error -> {
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Column(
                             modifier = Modifier
@@ -96,13 +98,16 @@ fun ResultScreen(
                                 color = MaterialTheme.colorScheme.error
                             )
                             Text(
-                                text = uiState.error.orEmpty(),
+                                text = (uiState as TextCleanerUiState.Error).message,
                                 style = MaterialTheme.typography.bodyMedium
                             )
+                            Button(onClick = { viewModel.cleanText(formState.input, formState.mode) }) {
+                                Text(text = stringResource(id = R.string.retry))
+                            }
                         }
                     }
                 }
-                else -> {
+                is TextCleanerUiState.Success -> {
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Column(
                             modifier = Modifier
@@ -112,7 +117,21 @@ fun ResultScreen(
                                 .verticalScroll(rememberScrollState())
                         ) {
                             Text(
-                                text = uiState.output.ifBlank { stringResource(id = R.string.result_empty) },
+                                text = (uiState as TextCleanerUiState.Success).cleanedText,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+                }
+                TextCleanerUiState.Idle -> {
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.result_empty),
                                 style = MaterialTheme.typography.bodyLarge
                             )
                         }
@@ -124,22 +143,26 @@ fun ResultScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Button(
-                    onClick = { clipboard.setText(AnnotatedString(uiState.output)) },
+                    onClick = {
+                        val text = (uiState as? TextCleanerUiState.Success)?.cleanedText.orEmpty()
+                        clipboard.setText(AnnotatedString(text))
+                    },
                     modifier = Modifier.weight(1f),
-                    enabled = uiState.output.isNotBlank()
+                    enabled = uiState is TextCleanerUiState.Success
                 ) {
                     Text(text = stringResource(id = R.string.copy))
                 }
                 OutlinedButton(
                     onClick = {
+                        val text = (uiState as? TextCleanerUiState.Success)?.cleanedText.orEmpty()
                         val intent = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
-                            putExtra(Intent.EXTRA_TEXT, uiState.output)
+                            putExtra(Intent.EXTRA_TEXT, text)
                         }
                         context.startActivity(Intent.createChooser(intent, null))
                     },
                     modifier = Modifier.weight(1f),
-                    enabled = uiState.output.isNotBlank()
+                    enabled = uiState is TextCleanerUiState.Success
                 ) {
                     Text(text = stringResource(id = R.string.share))
                 }

@@ -17,6 +17,7 @@
     <string name="error_title">Something went wrong</string>
     <string name="result_empty">No output yet. Run a cleaning mode first.</string>
     <string name="share">Share</string>
+    <string name="retry">Retry</string>
     <string name="back">Back</string>
     <string name="premium_title">Go Premium</string>
     <string name="premium_subtitle">Unlock more power for your writing:</string>

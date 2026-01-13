@@ -9,9 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,6 +36,7 @@ import com.aitextcleaner.R
 import com.aitextcleaner.ui.components.PremiumUpsellBottomSheet
 import com.aitextcleaner.viewmodel.CleaningMode
 import com.aitextcleaner.viewmodel.SettingsViewModel
+import com.aitextcleaner.viewmodel.TextCleanerUiState
 import com.aitextcleaner.viewmodel.TextCleanerViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,6 +48,7 @@ fun HomeScreen(
     onNavigateToSettings: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val formState by viewModel.formState.collectAsState()
     val settingsState by settingsViewModel.uiState.collectAsState()
     val maxChars = 2000
 
@@ -79,7 +79,7 @@ fun HomeScreen(
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
             )
             TextField(
-                value = uiState.input,
+                value = formState.input,
                 onValueChange = { value ->
                     if (value.length <= maxChars) {
                         viewModel.onInputChange(value)
@@ -89,42 +89,31 @@ fun HomeScreen(
                 placeholder = { Text(text = stringResource(id = R.string.input_hint)) },
                 minLines = 6,
                 supportingText = {
-                    Text(text = stringResource(id = R.string.character_count, uiState.input.length, maxChars))
+                    Text(text = stringResource(id = R.string.character_count, formState.input.length, maxChars))
                 }
             )
             ModeRow(
-                selectedMode = uiState.mode,
+                selectedMode = formState.mode,
                 onModeSelected = viewModel::onModeSelected
             )
-            if (uiState.error != null) {
+            if (uiState is TextCleanerUiState.Error) {
                 Text(
-                    text = uiState.error.orEmpty(),
+                    text = (uiState as TextCleanerUiState.Error).message,
                     color = MaterialTheme.colorScheme.error,
                     fontSize = 14.sp
                 )
             }
             Button(
                 onClick = {
-                    viewModel.submit()
-                    if (uiState.input.isNotBlank()) {
+                    viewModel.cleanText(formState.input, formState.mode)
+                    if (formState.input.isNotBlank()) {
                         onNavigateToResult()
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading && uiState.input.isNotBlank()
+                enabled = uiState !is TextCleanerUiState.Loading && formState.input.isNotBlank()
             ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .height(20.dp)
-                            .width(20.dp),
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = stringResource(id = R.string.clean_text))
-                } else {
-                    Text(text = stringResource(id = R.string.clean_text))
-                }
+                Text(text = stringResource(id = R.string.clean_text))
             }
             Spacer(modifier = Modifier.weight(1f))
             BannerAdPlaceholder(
