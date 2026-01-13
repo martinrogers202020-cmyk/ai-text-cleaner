@@ -5,9 +5,25 @@
     <string name="result_title">Result</string>
     <string name="settings_title">Settings</string>
     <string name="copy">Copy</string>
-    <string name="clean">Clean</string>
     <string name="simplify">Simplify</string>
-    <string name="summarize">Summarize</string>
+    <string name="clean_text">Clean Text</string>
+    <string name="fix_grammar">Fix Grammar</string>
+    <string name="make_polite">Make Polite</string>
+    <string name="make_stronger">Make Stronger</string>
+    <string name="character_count">%1$d/%2$d</string>
+    <string name="banner_placeholder">Banner Ad Placeholder</string>
+    <string name="go_pro">Go Pro</string>
+    <string name="loading">Cleaning your text…</string>
+    <string name="error_title">Something went wrong</string>
+    <string name="result_empty">No output yet. Run a cleaning mode first.</string>
+    <string name="share">Share</string>
+    <string name="back">Back</string>
+    <string name="premium_title">Go Premium</string>
+    <string name="premium_subtitle">Unlock more power for your writing:</string>
+    <string name="premium_benefit_no_ads">• No ads</string>
+    <string name="premium_benefit_faster">• Faster processing</string>
+    <string name="premium_benefit_extra_modes">• Extra modes</string>
+    <string name="watch_ad_unlock">Watch ad to unlock 24h</string>
     <string name="setting_use_system_theme">Use system theme</string>
     <string name="setting_enable_ads">Enable ads</string>
 </resources>

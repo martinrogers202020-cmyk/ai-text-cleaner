@@ -11,15 +11,16 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 enum class CleaningMode(val label: String) {
-    CLEAN("Clean"),
+    FIX_GRAMMAR("Fix Grammar"),
+    MAKE_POLITE("Make Polite"),
     SIMPLIFY("Simplify"),
-    SUMMARIZE("Summarize")
+    MAKE_STRONGER("Make Stronger")
 }
 
 data class TextCleanerUiState(
     val input: String = "",
     val output: String = "",
-    val mode: CleaningMode = CleaningMode.CLEAN,
+    val mode: CleaningMode = CleaningMode.FIX_GRAMMAR,
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -33,11 +34,11 @@ class TextCleanerViewModel : ViewModel() {
     val uiState: StateFlow<TextCleanerUiState> = _uiState.asStateFlow()
 
     fun onInputChange(value: String) {
-        _uiState.update { it.copy(input = value) }
+        _uiState.update { it.copy(input = value, error = null) }
     }
 
     fun onModeSelected(mode: CleaningMode) {
-        _uiState.update { it.copy(mode = mode) }
+        _uiState.update { it.copy(mode = mode, error = null) }
     }
 
     fun submit() {
