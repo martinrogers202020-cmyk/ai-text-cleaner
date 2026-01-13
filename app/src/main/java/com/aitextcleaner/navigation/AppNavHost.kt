@@ -35,6 +35,7 @@ fun AppNavHost(
         composable(AppDestination.Home.route) {
             HomeScreen(
                 viewModel = textCleanerViewModel,
+                settingsViewModel = settingsViewModel,
                 onNavigateToResult = { navController.navigate(AppDestination.Result.route) },
                 onNavigateToSettings = { navController.navigate(AppDestination.Settings.route) }
             )
