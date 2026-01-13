@@ -2,6 +2,7 @@ package com.aitextcleaner.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aitextcleaner.BuildConfig
 import com.aitextcleaner.data.network.OpenAiApiClient
 import com.aitextcleaner.data.repository.TextCleanerRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,40 +18,56 @@ enum class CleaningMode(val label: String) {
     MAKE_STRONGER("Make Stronger")
 }
 
-data class TextCleanerUiState(
+data class TextCleanerFormState(
     val input: String = "",
-    val output: String = "",
-    val mode: CleaningMode = CleaningMode.FIX_GRAMMAR,
-    val isLoading: Boolean = false,
-    val error: String? = null
+    val mode: CleaningMode = CleaningMode.FIX_GRAMMAR
 )
+
+sealed interface TextCleanerUiState {
+    data object Idle : TextCleanerUiState
+    data object Loading : TextCleanerUiState
+    data class Success(val cleanedText: String) : TextCleanerUiState
+    data class Error(val message: String) : TextCleanerUiState
+}
 
 class TextCleanerViewModel : ViewModel() {
     private val repository = TextCleanerRepository(
-        OpenAiApiClient(apiKey = "YOUR_OPENAI_API_KEY")
+        OpenAiApiClient(apiKey = BuildConfig.OPENAI_API_KEY)
     )
 
-    private val _uiState = MutableStateFlow(TextCleanerUiState())
+    private val _formState = MutableStateFlow(TextCleanerFormState())
+    val formState: StateFlow<TextCleanerFormState> = _formState.asStateFlow()
+
+    private val _uiState = MutableStateFlow<TextCleanerUiState>(TextCleanerUiState.Idle)
     val uiState: StateFlow<TextCleanerUiState> = _uiState.asStateFlow()
 
     fun onInputChange(value: String) {
-        _uiState.update { it.copy(input = value, error = null) }
+        _formState.update { it.copy(input = value) }
+        if (_uiState.value is TextCleanerUiState.Error) {
+            _uiState.value = TextCleanerUiState.Idle
+        }
     }
 
     fun onModeSelected(mode: CleaningMode) {
-        _uiState.update { it.copy(mode = mode, error = null) }
+        _formState.update { it.copy(mode = mode) }
+        if (_uiState.value is TextCleanerUiState.Error) {
+            _uiState.value = TextCleanerUiState.Idle
+        }
     }
 
-    fun submit() {
-        val input = _uiState.value.input.trim()
-        if (input.isBlank()) {
-            _uiState.update { it.copy(error = "Please enter text to clean.") }
+    fun cleanText(input: String, mode: CleaningMode) {
+        val trimmedInput = input.trim()
+        if (trimmedInput.isBlank()) {
+            _uiState.value = TextCleanerUiState.Error("Please enter text to clean.")
             return
         }
-        _uiState.update { it.copy(isLoading = true, error = null) }
+        _uiState.value = TextCleanerUiState.Loading
         viewModelScope.launch {
-            val output = repository.cleanText(input, _uiState.value.mode.label)
-            _uiState.update { it.copy(output = output, isLoading = false) }
+            val result = repository.cleanText(trimmedInput, mode)
+            _uiState.value = result.fold(
+                onSuccess = { TextCleanerUiState.Success(it) },
+                onFailure = { TextCleanerUiState.Error(it.message ?: "Something went wrong.") }
+            )
         }
     }
 }
