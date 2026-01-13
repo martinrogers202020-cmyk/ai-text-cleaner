@@ -8,7 +8,8 @@ import kotlinx.coroutines.flow.update
 
 data class SettingsUiState(
     val useSystemTheme: Boolean = true,
-    val enableAds: Boolean = true
+    val enableAds: Boolean = true,
+    val showPremiumUpsell: Boolean = false
 )
 
 class SettingsViewModel : ViewModel() {
@@ -21,5 +22,9 @@ class SettingsViewModel : ViewModel() {
 
     fun toggleAds(enabled: Boolean) {
         _uiState.update { it.copy(enableAds = enabled) }
+    }
+
+    fun setPremiumUpsellVisible(visible: Boolean) {
+        _uiState.update { it.copy(showPremiumUpsell = visible) }
     }
 }
