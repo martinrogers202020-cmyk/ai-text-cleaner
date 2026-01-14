@@ -1,6 +1,5 @@
 package com.aitextcleaner.data.network
 
-import com.aitextcleaner.viewmodel.CleaningMode
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
@@ -39,15 +38,12 @@ class OpenAiApiClient(
             .create(OpenAiApiService::class.java)
     }
 
-    suspend fun cleanText(input: String, mode: CleaningMode): Result<String> {
-        if (apiKey.isBlank()) {
-            return Result.failure(IllegalStateException("Missing OpenAI API key. Add OPENAI_API_KEY to local.properties."))
-        }
+    suspend fun createChatCompletion(systemPrompt: String, userMessage: String): Result<String> {
         val request = OpenAiRequest(
             model = "gpt-4o-mini",
             messages = listOf(
-                OpenAiMessage(role = "system", content = mode.toSystemPrompt()),
-                OpenAiMessage(role = "user", content = input)
+                OpenAiMessage(role = "system", content = systemPrompt),
+                OpenAiMessage(role = "user", content = userMessage)
             )
         )
         return try {
@@ -74,18 +70,5 @@ class OpenAiApiClient(
             in 500..599 -> "OpenAI service is having issues. Please try again later."
             else -> "Request failed with status code $code. Please try again."
         }
-    }
-}
-
-private fun CleaningMode.toSystemPrompt(): String {
-    return when (this) {
-        CleaningMode.FIX_GRAMMAR ->
-            "Fix grammar, spelling, and punctuation. Return only the corrected text with no markdown or explanation."
-        CleaningMode.MAKE_POLITE ->
-            "Rewrite the text to be polite and professional. Return only the rewritten text with no markdown or explanation."
-        CleaningMode.SIMPLIFY ->
-            "Simplify the text for clarity and readability. Return only the simplified text with no markdown or explanation."
-        CleaningMode.MAKE_STRONGER ->
-            "Rewrite the text to be stronger, more assertive, and impactful. Return only the rewritten text with no markdown or explanation."
     }
 }

@@ -61,9 +61,17 @@ class TextCleanerViewModel : ViewModel() {
             _uiState.value = TextCleanerUiState.Error("Please enter text to clean.")
             return
         }
+        if (BuildConfig.OPENAI_API_KEY.isBlank()) {
+            _uiState.value = TextCleanerUiState.Error("Missing API key")
+            return
+        }
         _uiState.value = TextCleanerUiState.Loading
         viewModelScope.launch {
-            val result = repository.cleanText(trimmedInput, mode)
+            val result = try {
+                repository.cleanText(trimmedInput, mode)
+            } catch (exception: Exception) {
+                Result.failure(exception)
+            }
             _uiState.value = result.fold(
                 onSuccess = { TextCleanerUiState.Success(it) },
                 onFailure = { TextCleanerUiState.Error(it.message ?: "Something went wrong.") }
